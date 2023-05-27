@@ -6,7 +6,7 @@ import java.util.function.Function;
 
 public class ServerBuilder {
     HashMap<String, Handler> handlers = new HashMap<>();
-    Function<UUID,Update> onDisconnect;
+    Function<UUID, Update> onDisconnect;
 
     final int port;
 
@@ -23,8 +23,16 @@ public class ServerBuilder {
         return new ServerFrame(handlers, onDisconnect, port);
     }
 
-    public ServerBuilder setOnDisconnect(Function<UUID,Update> handler) {
-        onDisconnect = handler;
+    public ServerBuilder setOnDisconnect(Function<UUID, Update> handler) {
+        onDisconnect = (uuid) -> {
+            try {
+                return handler.apply(uuid);
+            } catch (Exception e) {
+                System.err.println("Failed to execute disconnect handler!");
+                e.printStackTrace();
+                return null;
+            }
+        };
         return this;
     }
 }

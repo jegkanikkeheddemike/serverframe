@@ -67,7 +67,8 @@ public class ServerFrame {
                 if (onDisconnect != null) {
                     List<Update> disconnects = clients.stream()
                             .filter(Client::isDisconnected).map(Client::UUID)
-                            .map(onDisconnect).toList();
+                            .map(onDisconnect).filter(Objects::nonNull)
+                            .toList();
 
                     for (Update update : disconnects) {
                         for (Client client : clients) {
