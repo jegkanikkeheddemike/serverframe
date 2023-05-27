@@ -1,0 +1,1 @@
+mvn compile exec:java -Dexec.mainClass="main.java.dtu.mennesker.msgapp.ServerMain"
