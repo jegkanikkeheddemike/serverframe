@@ -52,33 +52,19 @@ public class ServerFrame {
 
                 clients.values().stream().filter(this::filterping).forEach(this::ping);
 
-                List<Update> updates = clients.values().stream()
+                clients.values().stream()
                         .map(Client::readCommand).filter(Objects::nonNull)
                         .map(this::handleCommand).filter(Objects::nonNull)
-                        .toList();
-
-                for (Update update : updates) {
-                    writeUpdate(update);
-                }
+                        .forEach(this::writeUpdate);
 
                 if (onDisconnect != null) {
-                    List<Update> disconnects = clients.values().stream()
+                    clients.values().stream()
                             .filter(Client::isDisconnected).map(Client::UUID)
                             .map(onDisconnect).filter(Objects::nonNull)
-                            .toList();
-
-                    for (Update update : disconnects) {
-                        writeUpdate(update);
-                    }
+                            .forEach(this::writeUpdate);
                 }
 
-                List<UUID> toBeRemoved = clients.values().stream()
-                        .filter(Client::isDisconnected)
-                        .map(Client::UUID).toList();
-
-                for (UUID id : toBeRemoved) {
-                    clients.remove(id);
-                }
+                clients.entrySet().removeIf(set -> set.getValue().isDisconnected());
             }
         }
 
