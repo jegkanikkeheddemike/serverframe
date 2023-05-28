@@ -58,9 +58,7 @@ public class ServerFrame {
                         .toList();
 
                 for (Update update : updates) {
-                    for (Client client : clients.values()) {
-                        client.writeUpdate(update);
-                    }
+                    writeUpdate(update);
                 }
 
                 if (onDisconnect != null) {
@@ -70,9 +68,7 @@ public class ServerFrame {
                             .toList();
 
                     for (Update update : disconnects) {
-                        for (Client client : clients.values()) {
-                            client.writeUpdate(update);
-                        }
+                        writeUpdate(update);
                     }
                 }
 
@@ -117,6 +113,24 @@ public class ServerFrame {
             command.caller().writeUpdate(new Update("error", e.getMessage()));
             System.err.println("Client failed to execute handler " + command.command() + " at " + e.getMessage());
             return null;
+        }
+    }
+
+    void writeUpdate(Update update) {
+        // if there is not filter, then tansmit to everyone
+        if (update.limitTo == null) {
+            for (Client client : clients.values()) {
+                client.writeUpdate(update);
+            }
+        } else {
+            for (UUID id : update.limitTo) {
+                Client client = clients.get(id);
+                if (client == null) {
+                    System.err.println("limitTo RECIEVED INVALID UUID " + id);
+                    continue;
+                }
+                client.writeUpdate(update);
+            }
         }
     }
 
