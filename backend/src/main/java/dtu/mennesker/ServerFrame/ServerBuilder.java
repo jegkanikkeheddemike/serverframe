@@ -1,4 +1,4 @@
-package main.java.dtu.mennesker.ServerFrame;
+package dtu.mennesker.ServerFrame;
 
 import java.util.HashMap;
 import java.util.UUID;

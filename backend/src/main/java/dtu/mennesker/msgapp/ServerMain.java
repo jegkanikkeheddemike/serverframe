@@ -1,13 +1,13 @@
-package main.java.dtu.mennesker.msgapp;
+package dtu.mennesker.msgapp;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import main.java.dtu.mennesker.ServerFrame.Client;
-import main.java.dtu.mennesker.ServerFrame.ServerBuilder;
-import main.java.dtu.mennesker.ServerFrame.ServerFrame;
-import main.java.dtu.mennesker.ServerFrame.Update;
+import dtu.mennesker.ServerFrame.Client;
+import dtu.mennesker.ServerFrame.ServerBuilder;
+import dtu.mennesker.ServerFrame.ServerFrame;
+import dtu.mennesker.ServerFrame.Update;
 
 public class ServerMain {
     public static void main(String[] args) {

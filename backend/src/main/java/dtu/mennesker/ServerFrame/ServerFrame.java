@@ -1,4 +1,4 @@
-package main.java.dtu.mennesker.ServerFrame;
+package dtu.mennesker.ServerFrame;
 
 import java.io.IOException;
 import java.net.ServerSocket;

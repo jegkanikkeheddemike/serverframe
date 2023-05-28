@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:async/async.dart';
+import 'package:chatapp/loginpage.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -15,53 +16,53 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Chatapp',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String connectedUsers = "";
+  String? connectedUsers;
   List<String> messages = [];
+  bool loggedIn = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            TextField(
-              onSubmitted: (value) {
-                conn!.writeEvent("Connect", value);
-              },
+      body: connectedUsers == null || !loggedIn
+          ? Center(child: LoginPage(submitName: (name) {
+              conn!.writeEvent("Connect", name);
+              setState(() {
+                loggedIn = true;
+              });
+            }))
+          : Center(
+              child: Column(
+                children: [
+                  Text("Chat! with $connectedUsers"),
+                  TextField(
+                    onSubmitted: (value) => conn!.writeEvent("PostMsg", value),
+                  ),
+                  ...messages.map((e) => Text(e))
+                ],
+              ),
             ),
-            const Text("Connected users:"),
-            Text(connectedUsers)
-          ],
-        ),
-      ),
     );
   }
 
-  _ServerConnection? conn;
+  ServerConnection? conn;
 
   void updateUsers(String newUsers) {
     setState(() {
@@ -73,27 +74,25 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     () async {
-      conn = await _ServerConnection.connect("10.0.0.28", updateUsers);
-      conn!.addHandler("UpdateUsers", (newUsers) {
-        setState(() {
-          connectedUsers = newUsers;
-        });
-      });
+      conn = await ServerConnection.connect("koebstoffer.info", updateUsers);
+      conn!.addHandler("UpdateUsers",
+          (newUsers) => setState(() => connectedUsers = newUsers));
+      conn!.addHandler("PostMsg", (msg) => setState(() => messages.add(msg)));
     }();
   }
 }
 
-class _ServerConnection {
+class ServerConnection {
   Socket socket;
   Map<String, void Function(String)> handlers = {};
 
-  _ServerConnection({required this.socket});
+  ServerConnection({required this.socket});
 
-  static Future<_ServerConnection> connect(
+  static Future<ServerConnection> connect(
       String addr, void Function(String) updateUsers) async {
     Socket socket = await Socket.connect(addr, 9977);
 
-    _ServerConnection conn = _ServerConnection(socket: socket);
+    ServerConnection conn = ServerConnection(socket: socket);
     conn.run();
     return conn;
   }

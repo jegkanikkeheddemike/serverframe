@@ -1,4 +1,4 @@
-package main.java.dtu.mennesker.ServerFrame;
+package dtu.mennesker.ServerFrame;
 
 import java.util.List;
 import java.util.UUID;
