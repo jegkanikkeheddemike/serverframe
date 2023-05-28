@@ -5,7 +5,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -24,7 +23,7 @@ public class ServerFrame {
     final Thread handlerThread;
     final Thread socketThread;
     AtomicBoolean running = new AtomicBoolean(true);
-    final LinkedList<Client> clients = new LinkedList<>();
+    final HashMap<UUID, Client> clients = new HashMap<>();
 
     ServerFrame(HashMap<String, Handler> handlers, Function<UUID, Update> onDisconnect, int port) {
         this.handlers = handlers;
@@ -51,33 +50,39 @@ public class ServerFrame {
 
             synchronized (clients) {
 
-                clients.stream().filter(this::filterping).forEach(this::ping);
+                clients.values().stream().filter(this::filterping).forEach(this::ping);
 
-                List<Update> updates = clients.stream()
+                List<Update> updates = clients.values().stream()
                         .map(Client::readCommand).filter(Objects::nonNull)
                         .map(this::handleCommand).filter(Objects::nonNull)
                         .toList();
 
                 for (Update update : updates) {
-                    for (Client client : clients) {
+                    for (Client client : clients.values()) {
                         client.writeUpdate(update);
                     }
                 }
 
                 if (onDisconnect != null) {
-                    List<Update> disconnects = clients.stream()
+                    List<Update> disconnects = clients.values().stream()
                             .filter(Client::isDisconnected).map(Client::UUID)
                             .map(onDisconnect).filter(Objects::nonNull)
                             .toList();
 
                     for (Update update : disconnects) {
-                        for (Client client : clients) {
+                        for (Client client : clients.values()) {
                             client.writeUpdate(update);
                         }
                     }
                 }
 
-                clients.removeIf(Client::isDisconnected);
+                List<UUID> toBeRemoved = clients.values().stream()
+                        .filter(Client::isDisconnected)
+                        .map(Client::UUID).toList();
+
+                for (UUID id : toBeRemoved) {
+                    clients.remove(id);
+                }
             }
         }
 
@@ -106,7 +111,7 @@ public class ServerFrame {
         }
 
         try {
-            return handler.apply(command.caller(), clients.stream().map(Client::UUID).toList());
+            return handler.apply(command.caller(), clients.values().stream().map(Client::UUID).toList());
         } catch (Exception e) {
 
             command.caller().writeUpdate(new Update("error", e.getMessage()));
@@ -138,7 +143,7 @@ public class ServerFrame {
                 Socket clientSocket = serverSocket.accept();
                 Client client = new Client(clientSocket);
                 synchronized (clients) {
-                    clients.add(client);
+                    clients.put(client.UUID(), client);
                 }
             }
         } catch (IOException e) {
